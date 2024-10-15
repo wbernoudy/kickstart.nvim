@@ -1,0 +1,4 @@
+snippet print_container
+    std::cout << "${1}: [";
+    for (const auto& elem : ${2}) std::cout << elem << ", ";
+    std::cout << "]\n";
