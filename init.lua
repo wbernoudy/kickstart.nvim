@@ -278,7 +278,7 @@ require('lazy').setup({
           else
             gitsigns.nav_hunk 'next'
           end
-        end)
+        end, { desc = "Next git hunk" })
 
         map('n', '[c', function()
           if vim.wo.diff then
@@ -286,7 +286,7 @@ require('lazy').setup({
           else
             gitsigns.nav_hunk 'prev'
           end
-        end)
+        end, { desc = "Prev git hunk" })
 
         -- Actions
         -- map('n', '<leader>hs', gitsigns.stage_hunk)
@@ -683,6 +683,9 @@ require('lazy').setup({
           init_options = {
             compilationDatabasePath="./build",
           },
+          on_attach = function()
+            vim.keymap.set('n', '<leader>e', function() vim.cmd('ClangdSwitchSourceHeader') end, { desc = 'Switch Source/Header' })
+          end,
         },
         -- gopls = {},
         -- pyright = {},
@@ -928,6 +931,7 @@ require('lazy').setup({
     priority = 1000, -- make sure to load this before all the other start plugins
     -- Optional; default configuration will be used if setup isn't called.
     config = function()
+      ---@diagnostic disable-next-line: missing-fields
       require('everforest').setup {
         vim.cmd.colorscheme 'everforest',
       }
@@ -1064,7 +1068,7 @@ require('lazy').setup({
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
