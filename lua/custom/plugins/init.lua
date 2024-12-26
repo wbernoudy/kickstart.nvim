@@ -5,5 +5,26 @@
 return {
   {
     'sindrets/diffview.nvim',
-  }
+  },
+  -- {
+  --   "rshkarin/mason-nvim-lint",
+  --   event = { "BufReadPre", "BufNewFile" },
+  --   dependencies = {
+  --     "williamboman/mason.nvim",
+  --     "mfussenegger/nvim-lint",
+  --   },
+  --   config = function()
+  --     require('mason-nvim-lint').setup({
+  --       ensure_installed = { 'mypy' },
+  --       ignore_install = { 'jsonlint' },
+  --     })
+  --
+  --     local lint = require('lint')
+  --     lint.linters_by_ft = {
+  --       python = { 'mypy' },
+  --     }
+  --
+  --     vim.keymap.set('n', '<leader>l', lint.try_lint, { desc = 'LSP: [L]int' })
+  --   end,
+  -- },
 }
