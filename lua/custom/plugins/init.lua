@@ -5,6 +5,7 @@
 return {
   {
     'sindrets/diffview.nvim',
+    'nvim-treesitter/nvim-treesitter-context',
   },
   -- {
   --   "rshkarin/mason-nvim-lint",

@@ -166,6 +166,10 @@ vim.o.expandtab = true -- Pressing the TAB key will insert spaces instead of a T
 vim.o.softtabstop = 4 -- Number of spaces inserted instead of a TAB character
 vim.o.shiftwidth = 4 -- Number of spaces inserted when indenting
 
+vim.diagnostic.config({
+  virtual_text = true,
+})
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -175,6 +179,14 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+vim.keymap.set('n', '<leader>gd', function()
+  vim.diagnostic.enable(not vim.diagnostic.is_enabled())
+end, { desc = 'Toggle diagnostics', silent = true, noremap = true })
+
+vim.keymap.set('n', '<leader>gl', function()
+  local new_config = not vim.diagnostic.config().virtual_lines
+  vim.diagnostic.config({ virtual_lines = new_config, virtual_text = not new_config})
+end, { desc = 'Toggle virtual line diagnostics', silent = true, noremap = true })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -416,13 +428,18 @@ require('lazy').setup({
       require('telescope').setup {
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
-        --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
+
+        defaults = {
+          mappings = {
+            n = {
+              ['<c-d>'] = require('telescope.actions').delete_buffer
+            },
+            -- i = { ['<c-enter>'] = 'to_fuzzy_refine' },
+          },
+        },
+
         -- pickers = {}
+
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -465,7 +482,7 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', function()
-        builtin.buffers { sort_lastused = true }
+        builtin.buffers { sort_mru = true, sort_lastused = true }
       end, { desc = '[ ] Find existing buffers' })
 
       -- Slightly advanced example of overriding default behavior and theme
@@ -689,9 +706,15 @@ require('lazy').setup({
           init_options = {
             compilationDatabasePath="./build",
           },
-          on_attach = function()
-            vim.keymap.set('n', '<leader>e', function() vim.cmd('ClangdSwitchSourceHeader') end, { desc = 'Switch Source/Header' })
-          end,
+        },
+        basedpyright = {
+          settings = {
+            basedpyright = {
+              analysis = {
+                typeCheckingMode="basic",
+              },
+            },
+          },
         },
         -- gopls = {},
         -- pyright = {},
@@ -738,17 +761,39 @@ require('lazy').setup({
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for tsserver)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
+        ensure_installed = {},
+        automatic_enable = true,
       }
+
+      vim.lsp.config('*', {
+        capabilities = capabilities,
+      })
+
+      for server, config in pairs(servers) do
+        vim.lsp.config(server, config)
+      end
+
+      vim.api.nvim_create_autocmd('LspAttach', {
+        callback = function(ev)
+          local client = vim.lsp.get_client_by_id(ev.data.client_id)
+          if not client then return end
+          local bufnr = ev.buf
+          local server_name = client.name
+
+          -- Call your existing on_attach if you have one:
+          -- if servers[server_name] and servers[server_name].on_attach then
+          --   servers[server_name].on_attach(client, bufnr)
+          -- end
+
+          -- or move config here:
+          if server_name == "clangd" then
+            vim.keymap.set('n', '<leader>e', function() vim.cmd('LspClangdSwitchSourceHeader') end, { desc = 'Switch Source/Header' })
+          else
+            -- general on_attach here
+            vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, { buffer = bufnr, desc = 'LSP: [R]e[n]ame' })
+          end
+        end
+      })
 
       -- require('lint').setup()
       -- require('mason-nvim-lint').setup({
