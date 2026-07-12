@@ -179,11 +179,11 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
-vim.keymap.set('n', '<leader>gd', function()
+vim.keymap.set('n', '<leader>dd', function()
   vim.diagnostic.enable(not vim.diagnostic.is_enabled())
 end, { desc = 'Toggle diagnostics', silent = true, noremap = true })
 
-vim.keymap.set('n', '<leader>gl', function()
+vim.keymap.set('n', '<leader>dl', function()
   local new_config = not vim.diagnostic.config().virtual_lines
   vim.diagnostic.config({ virtual_lines = new_config, virtual_text = not new_config})
 end, { desc = 'Toggle virtual line diagnostics', silent = true, noremap = true })
@@ -361,6 +361,17 @@ require('lazy').setup({
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       }
     end,
+    keys = {
+      {
+        "<leader>?",
+        function()
+          require("which-key").show({
+            global = true,
+          })
+        end,
+        desc = "Buffer Local Keymaps (which-key)",
+      },
+    },
   },
 
   -- NOTE: Plugins can specify dependencies.
@@ -432,7 +443,8 @@ require('lazy').setup({
         defaults = {
           mappings = {
             n = {
-              ['<c-d>'] = require('telescope.actions').delete_buffer
+              ['<C-d>'] = require('telescope.actions').delete_buffer,
+              ['<C-h>'] = require('telescope.actions').which_key,
             },
             -- i = { ['<c-enter>'] = 'to_fuzzy_refine' },
           },
@@ -478,6 +490,8 @@ require('lazy').setup({
         '<leader>sg', ":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>",
         { desc = '[S]earch by [G]rep' }
       )
+      vim.keymap.set('n', '<leader>sG', builtin.git_commits, { desc = '[S]earch [G]it commits' })
+      vim.keymap.set('n', '<leader>sc', builtin.git_status, { desc = '[S]earch current [C]hanged files' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
@@ -706,6 +720,10 @@ require('lazy').setup({
           init_options = {
             compilationDatabasePath="./build",
           },
+          cmd = {
+            "clangd",
+            "--completion-style=detailed",
+          },
         },
         basedpyright = {
           settings = {
@@ -849,6 +867,7 @@ require('lazy').setup({
       -- Snippet Engine & its associated nvim-cmp source
       {
         'L3MON4D3/LuaSnip',
+        'onsails/lspkind.nvim',
         build = (function()
           -- Build Step is needed for regex support in snippets.
           -- This step is not supported in many windows environments.
@@ -884,6 +903,7 @@ require('lazy').setup({
       -- See `:help cmp`
       local cmp = require 'cmp'
       local luasnip = require 'luasnip'
+      local lspkind = require 'lspkind'
       luasnip.config.setup {}
 
       -- require('luasnip.loaders.from_vscode').lazy_load({ paths = { "./custom_snippets" } })
@@ -895,7 +915,11 @@ require('lazy').setup({
             luasnip.lsp_expand(args.body)
           end,
         },
-        completion = { completeopt = 'menu,menuone,noselect' },
+        -- completion = { completeopt = 'menu,menuone,noselect' },
+        window = {
+          completion = cmp.config.window.bordered(),
+          -- documentation = cmp.config.window.bordered(),
+        },
 
         -- For an understanding of why these mappings were
         -- chosen, you will need to read `:help ins-completion`
@@ -960,6 +984,21 @@ require('lazy').setup({
           { name = 'path' },
           { name = 'buffer' },
           { name = 'nvim_lsp_signature_help' },
+        },
+        formatting = {
+          fields = { "abbr", "kind", "menu", },
+          format = lspkind.cmp_format({
+            mode = "symbol",
+            maxwidth = 50,
+            ellipsis_char = "...",
+            show_labelDetails = true,
+
+            -- before = function(_, vim_item)
+            --   -- vim_item.menu = ({ nvim_lsp = "" })["clangd"]
+            --   vim_item.menu = "what"
+            --   return vim_item
+            -- end,
+          }),
         },
       }
     end,
